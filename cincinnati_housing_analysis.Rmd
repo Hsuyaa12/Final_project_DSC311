@@ -1,0 +1,196 @@
+```{r}
+
+#CrimeRate - Per capita crime rate by city
+#Indus - Proportion of non-retail business acres per city.
+#River – River front or not (1-bounds river; 0-otherwise)
+#AvgRoom - Average number of rooms per dwelling per city
+#Age – Average age of a house by city
+#Tax - full-value property-tax rate per $10,000
+#PTRatio - pupil-teacher ratio by city
+#LStat - % lower status of the population by city
+#MedPrice - Median price of owner-occupied homes in $1000's
+
+#Load necessary libraries
+#------------------------
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+
+#Ingest data
+#------------------------
+cincinnati <- read_csv("CINCINNATI.csv")
+head(cincinnati)
+
+```
+```{r}
+#Data cleaning
+#------------------------
+
+#Check for missing values
+any(is.na(cincinnati))
+
+#Check for duplicates
+colSums(is.na(cincinnati))
+
+#Check for correct format
+str(cincinnati$CrimeRate)
+str(cincinnati$Indus)
+str(cincinnati$River)
+str(cincinnati$AvgRoom)
+str(cincinnati$Age)
+str(cincinnati$Tax)
+str(cincinnati$PTRatio)
+str(cincinnati$LStat)
+str(cincinnati$MedPrice)
+
+#Check for inconsistencies/invalid values
+any(cincinnati$CrimeRate < 0)
+any(cincinnati$Indus <= 0)
+any(cincinnati$River < 0 | cincinnati$River > 1)
+any(cincinnati$AvgRoom < 0)
+any(cincinnati$Age < 0)
+any(cincinnati$Age <= 0)
+any(cincinnati$Tax <= 0)
+any(cincinnati$PTRatio <= 0)
+any(cincinnati$PTRatio <= 0)
+any(cincinnati$LStat < 0 | cincinnati$LStat > 100)
+any(cincinnati$MedPrice <= 0)
+
+#Look for outliers, determine how to handle them
+summary(cincinnati$CrimeRate)
+boxplot(cincinnati$CrimeRate, main = "Boxplot of Crime Rate")
+hist(cincinnati$CrimeRate, breaks = 20, col = "lightcoral", main = "Histogram of Crime Rate")
+#Conclusion: There are two high crimerate outliers, but they are still reasonable, and without knowing which city the crime rate is associated with, there's no way to investigate to see if we can justify removing it 
+
+summary(cincinnati$Indus)
+boxplot(cincinnati$Indus, main = "Boxplot of Porportion of Industry")
+hist(cincinnati$Indus, breaks = 20, col = "lightcoral", main = "Histogram of Propotion of Industry")
+#Conclusion: No outliers
+
+summary(cincinnati$AvgRoom)
+boxplot(cincinnati$AvgRoom, main = "Boxplot of Average Number of Rooms")
+hist(cincinnati$AvgRoom, breaks = 20, col = "lightcoral", main = "Histogram of Average Number of Rooms")
+#Conclusion: No outliers
+
+summary(cincinnati$Age)
+boxplot(cincinnati$Age, main = "Boxplot of Average Number of Rooms")
+hist(cincinnati$Age, breaks = 20, col = "lightcoral", main = "Histogram of Average Number of Rooms")
+#Conclusion: No outliers
+
+summary(cincinnati$Tax)
+boxplot(cincinnati$Tax, main = "Boxplot of Tax Rate")
+hist(cincinnati$Tax, breaks = 20, col = "lightcoral", main = "Histogram of Tax Rate")
+outlier <- subset(cincinnati, Tax == 666)
+outlier
+#Conclusion: Initially it looks like there is an outlier on 666, but upon further examination, there are 36 records with this value, meaning it's not an outlier
+
+summary(cincinnati$PTRatio)
+boxplot(cincinnati$PTRatio, main = "Boxplot of Pupil-teacher ratio")
+hist(cincinnati$PTRatio, breaks = 20, col = "lightcoral", main = "Histogram of Pupil-teacher ratio")
+#Conclusion: One entry is a bit low, but not an outlier
+
+summary(cincinnati$LStat)
+boxplot(cincinnati$LStat, main = "Boxplot of Lower Status Proportion")
+hist(cincinnati$LStat, breaks = 20, col = "lightcoral", main = "Histogram of Lower Status Proportion")
+#Conclusion: No outliers
+
+summary(cincinnati$MedPrice)
+boxplot(cincinnati$MedPrice, main = "Boxplot of Median House Price")
+hist(cincinnati$MedPrice, breaks = 20, col = "lightcoral", main = "Histogram of Median House Price")
+#Conclusion: No outliers
+```
+
+
+```{r}
+#Exploratory Analysis
+#------------------------
+#Analyze relationship between variables
+ggpairs(cincinnati)
+#Biggest impact on Median Home Price:
+#-AvgRooms 0.747 (More rooms = more $)
+#-LStat -0.751 (Lower status = less $)
+#-PTRatio -0.575 (higher ratio = less teachers/student = less $)
+#-Indus -0.574 (more non-retail business = less appealing to live at = less $)
+#-Tax -0.540 (higher tax rate = lower $)
+#-Age -0.482 (the older the house = less $)
+
+#Possible Variable interdependency
+#-Tax/CrimeRate 0.538
+#-Tax/Indus 0.698
+#-Age/Indus 0.671
+#-LStat/Indus 0.645
+#-LStat/AvgRoom -0.615
+#-Tax/Age  0.508
+#-Age/LStat 0.654
+#-LStat/Tax 0.565
+
+
+#Check linear regression assumption of linearity
+ggplot(cincinnati, aes(x = CrimeRate, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "Crimerate vs Price",
+       x = "Crimerate",
+       y = "Price") +
+  theme_minimal()             
+#Result: Negative non-linear
+
+ggplot(cincinnati, aes(x = River, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "River vs Price",
+       x = "River",
+       y = "Price") +
+  theme_minimal()             
+#Result: Small negative correlation for on river
+
+ggplot(cincinnati, aes(x = AvgRoom, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "AvgRoom vs Price",
+       x = "AvgRoom",
+       y = "Price") +
+  theme_minimal()             
+#Result: Clear Positive Linear 
+
+ggplot(cincinnati, aes(x = Age, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "Age vs Price",
+       x = "Age",
+       y = "Price") +
+  theme_minimal()             
+#Result: Negative Non-linear 
+
+ggplot(cincinnati, aes(x = Tax, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "Tax vs Price",
+       x = "Tax",
+       y = "Price") +
+  theme_minimal()             
+#Result: Negative Correlation
+
+ggplot(cincinnati, aes(x = PTRatio, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "PTRatio vs Price",
+       x = "PTRatio",
+       y = "Price") +
+  theme_minimal()             
+#Result: Loose linear negative
+
+ggplot(cincinnati, aes(x = LStat, y = MedPrice)) + 
+  geom_point() +  
+  labs(title = "LStat vs Price",
+       x = "LStat",
+       y = "Price") +
+  theme_minimal()             
+#Result: Non-linear negative
+
+```
+
+
+```{r}
+#Linear Regression
+#------------------------
+model <- lm(MedPrice ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
+summary(model)
+
+
+```
+
