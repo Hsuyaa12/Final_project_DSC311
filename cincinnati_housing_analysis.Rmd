@@ -22,6 +22,7 @@ cincinnati <- read_csv("CINCINNATI.csv")
 head(cincinnati)
 
 ```
+
 ```{r}
 #Data cleaning
 #------------------------
@@ -99,7 +100,6 @@ boxplot(cincinnati$MedPrice, main = "Boxplot of Median House Price")
 hist(cincinnati$MedPrice, breaks = 20, col = "lightcoral", main = "Histogram of Median House Price")
 #Conclusion: No outliers
 ```
-
 
 ```{r}
 #Exploratory Analysis
@@ -184,13 +184,80 @@ ggplot(cincinnati, aes(x = LStat, y = MedPrice)) +
 
 ```
 
-
 ```{r}
 #Linear Regression
 #------------------------
 model <- lm(MedPrice ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
 summary(model)
+```
 
+
+```{r}
+# Investigating the RelationShip between Housing Age and Room Size
+ggplot(cincinnati, aes(x = Age, y = AvgRoom)) +
+  geom_point(color = "blue") +
+  labs(title = "Relationship between Housing Age and Average Room Size",
+       x = "Housing Age (Years)",
+       y = "Average Number of Rooms") +
+  theme_minimal()
+
+# Calculate correlation coefficient
+age_avgroom_cor <- cor(cincinnati$Age, cincinnati$AvgRoom)
+print(paste("The Pearson correlation coefficient between Age and AvgRoom is:", round(age_avgroom_cor, 3)))
+
+cor.test(cincinnati$Age, cincinnati$AvgRoom)
+
+```
+```
+#Interpretation:
+The correlation between the age and AvgRoom is -0.2423 , which means there is a mild
+negative linear relationship between them and as house get older, they tend to have slightly fewer rooms on average.
+Upon checking the p-value which is 0.002811 < 0.05 , we can say the observation is significantly significant.
+Also the confidence interval doesnot contain zero, it supports that true correlation is different from zero 
+and that there is a statistically significant negative relationship. 
+We can conclude that, in our dataset, as the housing age increases, there is a 
+slight tendency for the average number of rooms to decrease.
+
+```
+```{r}
+qqnorm(residuals(model), main = "Q–Q Plot of Model Residuals")
+qqline(residuals(model), col = "red")
+```
+
+
+```{r}
+model_log <- lm(log(MedPrice) ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
+qqnorm(residuals(model_log), main = "Q–Q Plot of log(MedPrice) Model Residuals")
+qqline(residuals(model_log), col = "red")
+summary(model_log)
+```
+
+
+```{r}
+#BOXCOX
+library(MASS)
+bc <- boxcox(model, plotit = TRUE)
+lambda <- bc$x[which.max(bc$y)]
+cat("Optimal lambda:", lambda, "\n")
 
 ```
 
+
+```{r}
+lambda_opt <- 0.2626263
+cincinnati1 <- cincinnati1 %>%
+  mutate(MedPrice_trans = (MedPrice^lambda_opt - 1)/lambda_opt)
+```
+
+
+```{r}
+model_boxcox <- lm(MedPrice_trans ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati1)
+summary(model_boxcox)
+
+
+```
+```{r}
+qqnorm(residuals(model_boxcox), main = "Q–Q Plot of Model Residuals")
+qqline(residuals(model_boxcox), col = "red")
+
+```
