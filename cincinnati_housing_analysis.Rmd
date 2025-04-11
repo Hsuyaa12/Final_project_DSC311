@@ -15,6 +15,8 @@
 library(tidyverse)
 library(ggplot2)
 library(GGally)
+library(leaps)
+library(MASS)
 
 #Ingest data
 #------------------------
@@ -184,15 +186,52 @@ ggplot(cincinnati, aes(x = LStat, y = MedPrice)) +
 
 ```
 
+
 ```{r}
-#Linear Regression
+#Question Investigation
 #------------------------
-model <- lm(MedPrice ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
-summary(model)
+# ==== examining distribution of crime rate ====
+
+ggplot(cincinnati, aes(x=CrimeRate))+
+  geom_histogram()
+
+summary(cincinnati$CrimeRate)
+ #    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+ # 0.01096  0.07250  0.19160  3.34698  2.69719 88.97620 
+
+# ==== recoding crimerate  ====
+
+# breakpoints: (0, Q1, Q3, inf) -> low, medium, high
+cincinnati$CrimeRate <- cut(
+  cincinnati$CrimeRate,
+  breaks = c(0, 0.07250, 2.69719, Inf),    # Define breakpoints for "low", "medium", "high"
+  labels = c("low", "medium", "high")      # Labels for each category
+)
+ggpairs(cincinnati, aes(color=cincinnati$CrimeRate, alpha=0.5))
+
+
+
+# ==== alt crimerate breakpoints ====
+
+cincinnati <- read.csv("CINCINNATI.csv")
+cincinnati$River <- recode(cincinnati$River, `0`="otherwise", `1`="bounds river")
+
+# using (0, Q1, Q3, inf) as breakpoints for low, medium, high didn't seem to represent it well
+# using arbitrary (0, 1, 5, inf) seems like better breakpoints
+
+cincinnati$CrimeRate <- cut(
+  cincinnati$CrimeRate,
+  breaks = c(0, 1, 5, Inf),    # Define breakpoints for "low", "medium", "high"
+  labels = c("low", "medium", "high")      # Labels for each category
+)
+
+ggpairs(cincinnati, aes(color=cincinnati$CrimeRate, alpha=0.5))
+
 ```
 
 
 ```{r}
+
 # Investigating the RelationShip between Housing Age and Room Size
 ggplot(cincinnati, aes(x = Age, y = AvgRoom)) +
   geom_point(color = "blue") +
@@ -208,6 +247,7 @@ print(paste("The Pearson correlation coefficient between Age and AvgRoom is:", r
 cor.test(cincinnati$Age, cincinnati$AvgRoom)
 
 ```
+
 ```
 #Interpretation:
 The correlation between the age and AvgRoom is -0.2423 , which means there is a mild
@@ -219,45 +259,87 @@ We can conclude that, in our dataset, as the housing age increases, there is a
 slight tendency for the average number of rooms to decrease.
 
 ```
+
 ```{r}
-qqnorm(residuals(model), main = "Q–Q Plot of Model Residuals")
-qqline(residuals(model), col = "red")
+#Investigating: Is there a relationship between the student-teacher ratio (PTRatio) and the crime rate (CrimeRate) in the city?
+ggplot(cincinnati, aes(x = PTRatio, y = CrimeRate)) +
+  geom_point(color = "blue") +
+  labs(title = "Relationship between PTRatio and CrimeRate",
+       x = "PTRatio",
+       y = "CrimeRate") +
+  theme_minimal()
+
+# Calculate correlation coefficient
+ptratio_crimerate_cor <- cor(cincinnati$PTRatio, cincinnati$CrimeRate)
+print(paste("The Pearson correlation coefficient between PTRatio and CrimeRate is:", round(ptratio_crimerate_cor, 3)))
+
+cor.test(cincinnati$PTRatio, cincinnati$CrimeRate)
+
+```
+```
+##Interpretation:
+The correlation between PTRatio and Crimerate is 0.274, which suggests that as the ratio of students to teachers increases, so does the crimerate. This intuitively makes sense, because less affuent cities will have less teachers for students, and areas such as this are typically more prone to crime. 
+Upon checking the p-value which is 0.00067 < 0.05 , we can say the observation is significantly significant.
+Also the confidence interval doesnot contain zero, it supports that true correlation is different from zero and that there is a statistically significant negative relationship. 
+We can conclude that, in our dataset, as the housing age increases, there is a 
+slight tendency for the average number of rooms to decrease.
 ```
 
-
 ```{r}
+#Linear Regression
+#------------------------
+model <- lm(MedPrice ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
+summary(model)
+
+#Residual Analysis
+plot(model$fitted.values, residuals(model),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs Fitted Values")
+abline(h = 0, col = "red")
+#Results: It looks like there is some non-linearity here, varience looks ok.
+
+#Check Normality
+qqnorm(residuals(model), main = "Q–Q Plot of Model Residuals")
+qqline(residuals(model), col = "red")
+#Normality looks ok
+
 model_log <- lm(log(MedPrice) ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
 qqnorm(residuals(model_log), main = "Q–Q Plot of log(MedPrice) Model Residuals")
 qqline(residuals(model_log), col = "red")
 summary(model_log)
-```
 
-
-```{r}
 #BOXCOX
-library(MASS)
 bc <- boxcox(model, plotit = TRUE)
 lambda <- bc$x[which.max(bc$y)]
 cat("Optimal lambda:", lambda, "\n")
 
-```
-
-
-```{r}
 lambda_opt <- 0.2626263
-cincinnati1 <- cincinnati1 %>%
+cincinnati1 <- cincinnati %>%
   mutate(MedPrice_trans = (MedPrice^lambda_opt - 1)/lambda_opt)
-```
 
-
-```{r}
 model_boxcox <- lm(MedPrice_trans ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati1)
 summary(model_boxcox)
 
-
-```
-```{r}
 qqnorm(residuals(model_boxcox), main = "Q–Q Plot of Model Residuals")
 qqline(residuals(model_boxcox), col = "red")
+
+```
+
+```{r}
+#Best Subset Model Selection
+best_subset_model <- regsubsets(MedPrice ~ ., data = cincinnati, nbest = 1)
+best_subset_summary <- summary(best_subset_model)
+#Add RSS, Adjusted R², Cp, and BIC to the same data frame
+results <- data.frame(
+  NumVar = 1:nrow(best_subset_summary$which),
+  best_subset_summary$outmat,
+  Rsq = best_subset_summary$rsq,
+  RSS = best_subset_summary$rss,
+  AdjR2 = best_subset_summary$adjr2,
+  Cp = best_subset_summary$cp,
+  BIC = best_subset_summary$bic
+  )
+print(results)
+
 
 ```
