@@ -1,34 +1,39 @@
-```{r}
+DATASET
 
-#CrimeRate - Per capita crime rate by city
-#Indus - Proportion of non-retail business acres per city.
-#River – River front or not (1-bounds river; 0-otherwise)
-#AvgRoom - Average number of rooms per dwelling per city
-#Age – Average age of a house by city
-#Tax - full-value property-tax rate per $10,000
-#PTRatio - pupil-teacher ratio by city
-#LStat - % lower status of the population by city
-#MedPrice - Median price of owner-occupied homes in $1000's
+CrimeRate - Per capita crime rate by city
+Indus - Proportion of non-retail business acres per city.
+River – River front or not (1-bounds river; 0-otherwise)
+AvgRoom - Average number of rooms per dwelling per city
+Age – Average age of a house by city
+Tax - full-value property-tax rate per $10,000
+PTRatio - pupil-teacher ratio by city
+LStat - % lower status of the population by city
+MedPrice - Median price of owner-occupied homes in $1000's
 
-#Load necessary libraries
-#------------------------
+Load necessary libraries
+------------------------
+``` {r}
 library(tidyverse)
 library(ggplot2)
 library(GGally)
 library(leaps)
 library(MASS)
-
-#Ingest data
-#------------------------
-cincinnati <- read_csv("CINCINNATI.csv")
-head(cincinnati)
-
+library(car)
+library(nortest)
+library(gridExtra)
 ```
 
+Ingest data
+------------------------
 ```{r}
-#Data cleaning
-#------------------------
+cincinnati <- read_csv("CINCINNATI.csv")
+head(cincinnati)
+```
 
+
+Data cleaning
+------------------------
+```{r}
 #Check for missing values
 any(is.na(cincinnati))
 
@@ -85,7 +90,7 @@ boxplot(cincinnati$Tax, main = "Boxplot of Tax Rate")
 hist(cincinnati$Tax, breaks = 20, col = "lightcoral", main = "Histogram of Tax Rate")
 outlier <- subset(cincinnati, Tax == 666)
 outlier
-#Conclusion: Initially it looks like there is an outlier on 666, but upon further examination, there are 36 records with this value, meaning it's not an outlier
+#Conclusion: Initially it looks like there is an outlier on 666, but upon further examination, there are 36 records with this value, meaning it's not an outlier. Need to figure out why this is here. 
 
 summary(cincinnati$PTRatio)
 boxplot(cincinnati$PTRatio, main = "Boxplot of Pupil-teacher ratio")
@@ -103,11 +108,13 @@ hist(cincinnati$MedPrice, breaks = 20, col = "lightcoral", main = "Histogram of 
 #Conclusion: No outliers
 ```
 
+
+Exploratory Analysis
+------------------------
 ```{r}
-#Exploratory Analysis
-#------------------------
 #Analyze relationship between variables
 ggpairs(cincinnati)
+ggcorr(cincinnati, label = TRUE, label_round = 2, palette = "RdYlBu")
 #Biggest impact on Median Home Price:
 #-AvgRooms 0.747 (More rooms = more $)
 #-LStat -0.751 (Lower status = less $)
@@ -166,7 +173,7 @@ ggplot(cincinnati, aes(x = Tax, y = MedPrice)) +
        x = "Tax",
        y = "Price") +
   theme_minimal()             
-#Result: Negative Correlation
+#Result: General Negative Correlation, but a weird grouping at the high end of specific tax rate
 
 ggplot(cincinnati, aes(x = PTRatio, y = MedPrice)) + 
   geom_point() +  
@@ -187,51 +194,36 @@ ggplot(cincinnati, aes(x = LStat, y = MedPrice)) +
 ```
 
 
+Research Question Investigation
+------------------------
 ```{r}
-#Question Investigation
-#------------------------
-# ==== examining distribution of crime rate ====
+#How does the crime rate affect housing prices across different price segments?
+#create price quartiles
+cincinnati$price_quartile <- cut(cincinnati$MedPrice, 
+                                 breaks = quantile(cincinnati$MedPrice, probs = 0:4/4), 
+                                 include.lowest = TRUE, 
+                                 labels = c("Q1", "Q2", "Q3", "Q4"))
 
-ggplot(cincinnati, aes(x=CrimeRate))+
-  geom_histogram()
+# calculate mean crime rate for each quartile
+mean_crime_by_quartile <- cincinnati %>%
+  group_by(price_quartile) %>%
+  summarize(mean_crime_rate = mean(CrimeRate, na.rm = TRUE))
 
-summary(cincinnati$CrimeRate)
- #    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
- # 0.01096  0.07250  0.19160  3.34698  2.69719 88.97620 
+#create scatter plot with trend lines
+ggplot(cincinnati, aes(x = MedPrice, y = CrimeRate)) +
+  geom_point(aes(color = price_quartile), alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, aes(group = price_quartile)) +
+  labs(title = "Crime Rate vs Housing Prices by Price Quartile",
+       x = "Housing Price",
+       y = "Crime Rate") +
+  theme_minimal()
 
-# ==== recoding crimerate  ====
-
-# breakpoints: (0, Q1, Q3, inf) -> low, medium, high
-cincinnati$CrimeRate <- cut(
-  cincinnati$CrimeRate,
-  breaks = c(0, 0.07250, 2.69719, Inf),    # Define breakpoints for "low", "medium", "high"
-  labels = c("low", "medium", "high")      # Labels for each category
-)
-ggpairs(cincinnati, aes(color=cincinnati$CrimeRate, alpha=0.5))
-
-
-
-# ==== alt crimerate breakpoints ====
-
-cincinnati <- read.csv("CINCINNATI.csv")
-cincinnati$River <- recode(cincinnati$River, `0`="otherwise", `1`="bounds river")
-
-# using (0, Q1, Q3, inf) as breakpoints for low, medium, high didn't seem to represent it well
-# using arbitrary (0, 1, 5, inf) seems like better breakpoints
-
-cincinnati$CrimeRate <- cut(
-  cincinnati$CrimeRate,
-  breaks = c(0, 1, 5, Inf),    # Define breakpoints for "low", "medium", "high"
-  labels = c("low", "medium", "high")      # Labels for each category
-)
-
-ggpairs(cincinnati, aes(color=cincinnati$CrimeRate, alpha=0.5))
 
 ```
-
+Interpretation:
+As we can see here, it appears that crimerate has the highest impact on low price homes. We can see that the lowest price quartile (Q1) seems to have the highest crime rates, and the trend line indicates that there is a strong negative correlation with housing price and crime rate in Q1. Although there are some smal trends in the other quartiles, they aren't really clear enough to draw meaningful conclusions. From this, it appears that high crime disproportionately impacts lower price housing more than any other pricing group. 
 
 ```{r}
-
 # Investigating the RelationShip between Housing Age and Room Size
 ggplot(cincinnati, aes(x = Age, y = AvgRoom)) +
   geom_point(color = "blue") +
@@ -249,11 +241,11 @@ cor.test(cincinnati$Age, cincinnati$AvgRoom)
 ```
 
 ```
-#Interpretation:
+Interpretation:
 The correlation between the age and AvgRoom is -0.2423 , which means there is a mild
 negative linear relationship between them and as house get older, they tend to have slightly fewer rooms on average.
 Upon checking the p-value which is 0.002811 < 0.05 , we can say the observation is significantly significant.
-Also the confidence interval doesnot contain zero, it supports that true correlation is different from zero 
+Also the confidence interval does not contain zero, it supports that true correlation is different from zero 
 and that there is a statistically significant negative relationship. 
 We can conclude that, in our dataset, as the housing age increases, there is a 
 slight tendency for the average number of rooms to decrease.
@@ -269,7 +261,7 @@ ggplot(cincinnati, aes(x = PTRatio, y = CrimeRate)) +
        y = "CrimeRate") +
   theme_minimal()
 
-# Calculate correlation coefficient
+#Calculate correlation coefficient
 ptratio_crimerate_cor <- cor(cincinnati$PTRatio, cincinnati$CrimeRate)
 print(paste("The Pearson correlation coefficient between PTRatio and CrimeRate is:", round(ptratio_crimerate_cor, 3)))
 
@@ -285,51 +277,255 @@ We can conclude that, in our dataset, as the housing age increases, there is a
 slight tendency for the average number of rooms to decrease.
 ```
 
+Data Transformations/Categorizations
+--------------------------------------
 ```{r}
-#Linear Regression
-#------------------------
-model <- lm(MedPrice ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
-summary(model)
+cincinnati <- read_csv("CINCINNATI.csv") #Reset data
+```
 
-#Residual Analysis
-plot(model$fitted.values, residuals(model),
-     xlab = "Fitted Values", ylab = "Residuals",
-     main = "Residuals vs Fitted Values")
-abline(h = 0, col = "red")
-#Results: It looks like there is some non-linearity here, varience looks ok.
-
-#Check Normality
-qqnorm(residuals(model), main = "Q–Q Plot of Model Residuals")
-qqline(residuals(model), col = "red")
-#Normality looks ok
-
-model_log <- lm(log(MedPrice) ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati)
-qqnorm(residuals(model_log), main = "Q–Q Plot of log(MedPrice) Model Residuals")
-qqline(residuals(model_log), col = "red")
-summary(model_log)
-
-#BOXCOX
-bc <- boxcox(model, plotit = TRUE)
-lambda <- bc$x[which.max(bc$y)]
-cat("Optimal lambda:", lambda, "\n")
-
-lambda_opt <- 0.2626263
-cincinnati1 <- cincinnati %>%
-  mutate(MedPrice_trans = (MedPrice^lambda_opt - 1)/lambda_opt)
-
-model_boxcox <- lm(MedPrice_trans ~ CrimeRate + Indus + River + AvgRoom + Age + Tax + PTRatio + LStat, data = cincinnati1)
-summary(model_boxcox)
-
-qqnorm(residuals(model_boxcox), main = "Q–Q Plot of Model Residuals")
-qqline(residuals(model_boxcox), col = "red")
+Investigate bimodality in Indus, convert to categorical variable
+```{r}
+#There appears to be bimodality with Indus
+dens <- density(cincinnati$Indus)
+plot(dens, main = "Checking for Bimodality in Indus")
+polygon(dens, col = "skyblue", border = "darkblue")
+#Find local minima
+local_mins <- which(diff(sign(diff(dens$y))) == 2) + 1
+min_x_values <- dens$x[local_mins]
+min_y_values <- dens$y[local_mins]
+#Add vertical lines and points at the local minima
+abline(v = min_x_values, col = "red", lty = 2)
+points(min_x_values, min_y_values, col = "red", pch = 19)
+#Print the local minimum x-values
+min_x_values
+#Convert Indus to a categorical variable.
+cincinnati$IndusCat <- ifelse(cincinnati$Indus < min_x_values, "Low", "High")
+cincinnati$IndusCat <- factor(cincinnati$IndusCat, levels = c("Low", "High"))
+ggpairs(data = cincinnati, aes(color = IndusCat, alpha = 0.6))
 
 ```
 
+Investigate weird spread of CrimeRate, convert to categorical variable
 ```{r}
-#Best Subset Model Selection
-best_subset_model <- regsubsets(MedPrice ~ ., data = cincinnati, nbest = 1)
+ggplot(cincinnati, aes(x=CrimeRate))+
+  geom_histogram()
+
+summary(cincinnati$CrimeRate)
+ #    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+ # 0.01096  0.07250  0.19160  3.34698  2.69719 88.97620 
+
+#recoding crimerate
+# breakpoints: (0, Q1, Q3, inf) -> low, medium, high
+
+#cincinnati$CrimeRate <- cut(
+#  cincinnati$CrimeRate,
+#  breaks = c(0, 0.07250, 2.69719, Inf),    # Define breakpoints for "low", "medium", "high"
+#  labels = c("low", "medium", "high")      # Labels for each category
+#)
+#ggpairs(cincinnati, aes(color=cincinnati$CrimeRate, alpha=0.5))
+
+
+# ==== alt crimerate breakpoints ====
+
+#cincinnati <- read.csv("CINCINNATI.csv")
+#cincinnati$River <- recode(cincinnati$River, `0`="otherwise", `1`="bounds river")
+
+# using (0, Q1, Q3, inf) as breakpoints for low, medium, high didn't seem to represent it well
+# using arbitrary (0, 1, 5, inf) seems like better breakpoints
+
+cincinnati$CrimeRateCat <- cut(
+  cincinnati$CrimeRate,
+  breaks = c(0, 1, 5, Inf),    # Define breakpoints for "low", "medium", "high"
+  labels = c("Low", "Medium", "High")      # Labels for each category
+)
+cincinnati$CrimeRateCat <- factor(cincinnati$CrimeRateCat, levels = c("Low", "Medium", "High"))
+ggpairs(cincinnati, aes(color=cincinnati$CrimeRateCat, alpha=0.5))
+
+#create binary variables for categorical variable
+cincinnati$IsLowCrime <- ifelse(cincinnati$CrimeRateCat == "Low", 1, 0)
+cincinnati$IsMediumCrime <- ifelse(cincinnati$CrimeRateCat == "Medium", 1, 0)
+cincinnati$IsHighCrime <- ifelse(cincinnati$CrimeRateCat == "High", 1, 0)
+
+
+```
+
+
+Individual Variable Residual Analysis
+-------------------------------------
+```{r}
+#CrimeRate
+m <- lm(MedPrice ~ CrimeRateCat, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+#examine each category vs MedPrice
+ggplot(cincinnati, aes(x = CrimeRate, y = MedPrice, color = CrimeRateCat)) +
+  geom_point(alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Crime vs Median Housing Price",
+       x = "Crime Rate",
+       y = "Median Housing Price",
+       color = "Crime Category")
+
+```
+Findings: Looks fine, nothing of note here. Confirms that higher crime rates generally correlate to lower housing prices
+
+```{r}
+#IndusCat
+m <- lm(MedPrice ~ IndusCat, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+#examine each category vs MedPrice
+ggplot(cincinnati, aes(x = Indus, y = MedPrice, color = IndusCat)) +
+  geom_point(alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Indus vs Median Housing Price",
+       x = "Indus",
+       y = "Median Housing Price",
+       color = "Indus Category")
+```
+Findings: Looks fine, nothing of note. Confirms that higher Indus categories generally have a moderately lower housing price
+
+```{r}
+#River
+m <- lm(MedPrice ~ River, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+```
+Findings: Looks mostly ok, the normality looks slightly skewed but not too alarming.
+
+```{r}
+#AvgRoom
+m <- lm(MedPrice ~ AvgRoom, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+
+```
+Findings: Overall, it looks ok. The Residuals vs Fitted plot has a moderate funnel shape, indicating possible slight levels of non-constant varience. The trend line on the Residuals vs Fitted plot isn't too bad, so leave as is for now. Normality looks good. 
+
+```{r}
+#Age
+m <- lm(MedPrice ~ Age, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+
+#What does log transform do?
+m_log <- lm(log(MedPrice) ~ Age, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m_log)
+
+```
+Findings: Residual plot looks a bit concerning. Close grouping below residual line, spread grouping above it. Q-Q plot right side trends upward rather quickly. Doing a log transform on MedPrice seems to fix normality and tighten up the varience, though there is still a reverse funnel shape, indicating more variance at lower prices. This makes sense, since lower-priced homes are more susceptible to factors like crime, age, etc. which aren't in the model here. 
+
+```{r}
+#Tax
+m <- lm(MedPrice ~ Tax, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+
+```
+Findings: We have a wierd grouping of tax rates on the left side, which corresponds to the high indus tax bracket, and then a normal spread on the right, corresponding to the low indus cities. On both sides, the residuals look evenly spread around the line, indicating equal varience despite the weird groupings. The normality also looks good. 
+
+```{r}
+#PTRatio
+m <- lm(MedPrice ~ PTRatio, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+
+```
+Findings: Looks ok, nothing too noteworthy here. 
+
+```{r}
+#LStat
+m <- lm(MedPrice ~ LStat, data = cincinnati)
+par(mfrow = c(2,2))
+plot(m)
+
+m1 <- lm(MedPrice ~ I(LStat^2), data = cincinnati)
+par(mfrow = c(2,2))
+plot(m1)
+
+m2 <- lm(MedPrice ~ I(1/LStat), data = cincinnati)
+par(mfrow = c(2,2))
+plot(m2)
+
+m3 <- lm(MedPrice ~ log(LStat), data = cincinnati)
+par(mfrow = c(2,2))
+plot(m3)
+
+```
+Findings: Initial plot of LStat indicates non-linearity in the residual plot, and also in the Q-Q plot via a sharp deviation on the right end of the line. To test the non-linearity theory, I applied two different transformations on LStat:
+1. Square LStat: Standard way to try to linearize a relationship. This did nothing to help the residual plot, and seems to have only sharpened the trend.
+2. 1/LStat: This was indicated by the shape of the LStat vs MedPrice plot earlier, where there seemed to be a 1/x relationship. 
+
+I also decided to try a log transform on LStat, which actually seemed to significantly improve the residual plot. The Q-Q plots of 1/LStat and log(LStat) seem almost the same, but the residual plot is the best for log(Lstat), indicating that doing the log transformations seems to significantly improve the variance. 
+
+
+Figure out how to handle Indus/Tax relationship 
+------------------------------------------------
+```{r}
+ggplot(cincinnati, aes(x = Tax, y = MedPrice, color = IndusCat)) +
+  geom_point(alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Tax vs MedPrice w/IndusCat",
+       x = "Tax",
+       y = "MedPrice",
+       color = "Indus Category")
+
+ggplot(cincinnati, aes(x = Tax, y = MedPrice, color = IndusCat)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(aes(group = 1), method = "lm", se = FALSE, color = "black", linetype = "dashed") + # Overall trendline
+  theme_minimal() +
+  labs(title = "Tax vs MedPrice with Trendlines (by IndusCat and Overall)",
+       x = "Tax",
+       y = "MedPrice",
+       color = "Indus Category")
+
+```
+Findings: The special group (High Indus, Tax = 666) isn't drastically deviating in terms of the Tax relationship. The blue trendline, which includes the cluster at Tax ≈ 666, doesn't show a sharp bend or a completely different slope at that high tax value compared to the rest of the blue line. This reinforces the observation that they might roughly follow a similar trend with respect to tax. For now, I'll leave as is. 
+
+
+Split Data into Training/Test sets
+-----------------------------------
+```{r}
+set.seed(123)
+sample <- sample(c(TRUE, FALSE), nrow(cincinnati), replace=TRUE, prob=c(0.7,0.3))
+train  <- cincinnati[sample, ]
+test   <- cincinnati[!sample, ]
+
+```
+
+
+
+Linear Regression - Full Model
+---------------------------------
+```{r}
+full_model1 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + log(LStat), data = train)
+summary(full_model1)
+par(mfrow = c(2,2))
+plot(full_model1)
+ad.test(full_model1$residuals)
+
+full_model2 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + I(1/LStat), data = train)
+summary(full_model2)
+par(mfrow = c(2,2))
+plot(full_model2)
+ad.test(full_model2$residuals)
+
+```
+
+Findings: considering both the slightly better summary statistics and the potentially improved linearity suggested by the residuals plot, it appears that using I(1/LStat) is likely the better transformation for LStat in the linear regression model for predicting MedPrice in this dataset. Addtionally, the AD p-values for both models indicate that we don't have strong evidence against normality.
+
+Linear Regression - Best Subset Model Selection
+---------------------------------------------------
+```{r}
+best_subset_model <- regsubsets(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + I(1/LStat), data = train, nbest = 2)
 best_subset_summary <- summary(best_subset_model)
-#Add RSS, Adjusted R², Cp, and BIC to the same data frame
+
+#Add RSS, Adjusted R², Cp, and BIC, MSE, etc to the same data frame
+mse_values <- best_subset_summary$rss / (nrow(train) - 1:nrow(best_subset_summary$which))
+mse_values <- round(mse_values, 2)
+
 results <- data.frame(
   NumVar = 1:nrow(best_subset_summary$which),
   best_subset_summary$outmat,
@@ -337,9 +533,122 @@ results <- data.frame(
   RSS = best_subset_summary$rss,
   AdjR2 = best_subset_summary$adjr2,
   Cp = best_subset_summary$cp,
-  BIC = best_subset_summary$bic
-  )
-print(results)
+  BIC = best_subset_summary$bic,
+  MSE = mse_values
+)
+results$Rsq <- round(results$Rsq, 2)
+results$RSS <- round(results$RSS, 2)
+results$AdjR2 <- round(results$AdjR2, 2)
+results$Cp <- round(results$Cp, 2)
+results$BIC <- round(results$BIC, 2)
 
+
+print(results)
+```
+
+Make four plots to allow comparison between models
+-----------------------------------------------------
+```{r}
+p1<-ggplot(data = results, aes(x = as.factor(NumVar), y = MSE))+
+  geom_point(color="black", size=2) +ylab("MSE") + xlab("No of variables")
+
+p2<-ggplot(data = results, aes(x = as.factor(NumVar), y = AdjR2)) +
+  geom_point(color="black", size=2) +ylab("Adjusted RSQ") + xlab("No of variables")+
+  geom_point(data = results[which.max(results$AdjR2), ], color="red", 
+             size=3) 
+
+p3<-ggplot(data = results, aes(x = as.factor(NumVar), y = Cp)) +
+  geom_point(color="black", size=2) +ylab("Cp") + xlab("No of variables")+
+  geom_point(data = results[which.min(results$Cp), ], color="red", 
+             size=3) 
+
+p4<-ggplot(data = results, aes(x = as.factor(NumVar), y = BIC)) +
+  geom_point(color="black", size=2) +ylab("BIC") + xlab("No of variables")+
+  geom_point(data = results[which.min(results$BIC), ], color="red", 
+             size=3) 
+
+grid.arrange(p1,p2,p3,p4,nrow=2)
 
 ```
+Findings: It looks like model 7 is the clear winner. It is closely tied for lowest MSE, has the best Adjust RSQ, and lowest Cp and Bix values.
+
+Get Model 7
+-------------------
+```{r}
+coef(best_subset_model, 7)
+model7 <- lm(MedPrice ~ CrimeRateCat + AvgRoom + PTRatio + I(1/LStat), data=train)
+summary(model7)
+par(mfrow = c(2,2))
+plot(full_model1)
+ad.test(full_model1$residuals)
+anova(model7)
+deviance(model7)
+vif(model7)
+```
+Findings: The linear model fitted to the training data, predicting MedPrice using CrimeRateCat, AvgRoom, PTRatio, and I(1/LStat), demonstrates a strong overall fit, with a high Multiple R-squared of 0.7946 and a significant F-statistic (p < 2.2e-16). The ANOVA results indicate that all four predictors, CrimeRateCat, AvgRoom, PTRatio, and I(1/LStat), are statistically significant contributors to explaining variation in median housing prices.
+
+Specifically, a higher average number of rooms and a lower percentage of lower-status population (reflected by a higher value of 1/LStat) are associated with higher median prices. A higher pupil-teacher ratio (PTRatio) is associated with lower median prices. The crime rate category also has a significant impact, with areas classified as "High" showing substantially lower median prices compared to the "Low" reference group.
+
+The residual sum of squares for the model is 1420.17, and an Anderson-Darling test on the residuals suggests no strong evidence against normality (p = 0.4397). Finally, variance inflation factors (VIFs) are all below 2, indicating that multicollinearity is not a serious concern in the model
+
+Linear Regression - Forward Selection
+---------------------------------------
+```{r}
+null_model <- lm(MedPrice ~ 1, data = train)
+upper_model <- formula(full_model2)
+forward_model <- step(null_model, direction = "forward", scope = upper_model)
+coef(forward_model)
+summary(forward_model)
+par(mfrow = c(2,2))
+plot(forward_model)
+ad.test(forward_model$residuals)
+anova(forward_model)
+deviance(forward_model)
+vif(forward_model)
+
+```
+Findings: Same model as was produced by best subset selection (model7)
+
+
+Linear Regression - Backward Selection
+----------------------------------------
+```{r}
+backward_model <- step(full_model2, direction = "backward")
+coef(backward_model)
+summary(backward_model)
+par(mfrow = c(2,2))
+plot(backward_model)
+ad.test(backward_model$residuals)
+anova(backward_model)
+deviance(backward_model)
+vif(backward_model)
+```
+Findings: Also produced the exact same model as the forward selection and model7
+
+```{r}
+#Model Comparison & Analysis
+
+```
+
+
+
+#Notes
+4/16/2025
+Start with focus on demography.
+Figure out how much of the houses are on the river. See if there are not many on the river, like 6 or so, if so, they may be outliers and can be dropped. 
+We only have 7 houses on the river, these might destory our analysis.
+Make a boxplot to check for outliers. If so, check to see if those prices are riverfront. If so, drop them. If not, keep them in.
+
+Next, check age. 
+We have a range from 3-100. Google and see what the cutoffs are, break it into categories.
+
+Plot only y = B0 + B1x1. Make a bunch of residual plots to see if the model looks good. If several have a non constant variance , transform y variable using ln(y). Then, check to see if ln(y) = B0 + B1x1
+If we see a curve indicating non linearity, add x^2 or whatever to give y = B0 + B1x1 + B2X^2. The VIF here will be huge but that doesn't matter.
+
+Everytime we do changes, we need to fit and check the residuals and see if it improves. 
+
+Once we decide on all the transformations, we start building. Not just best subsets, but also forward and backaward selection. Check if these models are in the best subset.
+
+To check interactions with categorical variables, we would make a seperate chart for each option in the categorical variable to check each option to see if it interacted. In our case, plot Riverfront x1 and x2 vs medPrice. 
+
+It is very hard to find interaction in quantitative varables. We can cateorgize it and make plots out of it to check. 
