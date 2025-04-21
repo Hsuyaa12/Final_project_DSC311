@@ -269,13 +269,28 @@ cor.test(cincinnati$PTRatio, cincinnati$CrimeRate)
 
 ```
 ```
-##Interpretation:
+Interpretation:
 The correlation between PTRatio and Crimerate is 0.274, which suggests that as the ratio of students to teachers increases, so does the crimerate. This intuitively makes sense, because less affuent cities will have less teachers for students, and areas such as this are typically more prone to crime. 
 Upon checking the p-value which is 0.00067 < 0.05 , we can say the observation is significantly significant.
 Also the confidence interval doesnot contain zero, it supports that true correlation is different from zero and that there is a statistically significant negative relationship. 
 We can conclude that, in our dataset, as the housing age increases, there is a 
 slight tendency for the average number of rooms to decrease.
+
+
+```{r}
+#Investigating: How do socioeconomic factors ( LStat variable) correlate with  property tax rates?
+
+
 ```
+Interpretation:
+
+```{r}
+#Investigating: What is the relationship between industrial land use (Indus) and housing characteristics such as housing prices, room sizes, and property tax rates?
+
+
+```
+Interpretation:
+
 
 Data Transformations/Categorizations
 --------------------------------------
@@ -627,6 +642,7 @@ Findings: Also produced the exact same model as the forward selection and model7
 
 ```{r}
 #Model Comparison & Analysis
+
 
 ```
 
