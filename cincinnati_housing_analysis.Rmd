@@ -272,18 +272,65 @@ cor.test(cincinnati$PTRatio, cincinnati$CrimeRate)
 Interpretation:
 The correlation between PTRatio and Crimerate is 0.274, which suggests that as the ratio of students to teachers increases, so does the crimerate. This intuitively makes sense, because less affuent cities will have less teachers for students, and areas such as this are typically more prone to crime. 
 Upon checking the p-value which is 0.00067 < 0.05 , we can say the observation is significantly significant.
-Also the confidence interval doesnot contain zero, it supports that true correlation is different from zero and that there is a statistically significant negative relationship. 
+Also the confidence interval does not contain zero, it supports that true correlation is different from zero and that there is a statistically significant negative relationship. 
 We can conclude that, in our dataset, as the housing age increases, there is a 
 slight tendency for the average number of rooms to decrease.
 
 
 ```{r}
-#Investigating: How do socioeconomic factors ( LStat variable) correlate with  property tax rates?
+#Investigating: How do socioeconomic factors (LStat variable) correlate with property tax rates?
+#   LStat - % lower status of the population by city
+#   Tax - full-value property-tax rate per $10,000
+cincinnati <- read_csv("CINCINNATI.csv") #Reset data
+ggplot(cincinnati, aes(x = Tax, y = LStat)) +
+  geom_point() +
+  labs(
+    title = "Tax vs LStat"
+  )
 
+# Attempting to explain strange grouping found in scatter plot
+#   grouping by river
+ggplot(cincinnati, aes(x = Tax, y = LStat, color=as.factor(River))) +
+  geom_point() +
+  labs(
+    title = "Tax vs LStat by River",
+    color = "River"
+  )
 
+#   grouping by CrimeRate Category
+cincinnati$CrimeRate <- cut(
+  cincinnati$CrimeRate,
+  breaks = c(0, 1, 5, Inf),    # Define breakpoints for "low", "moderate", "high"
+  labels = c("low", "moderate", "high")      # Labels for each category
+)
+ggplot(cincinnati, aes(x = Tax, y = LStat, color=as.factor(CrimeRate))) +
+  geom_point() +
+  labs(
+    title = "Tax vs LStat by Crime rate category",
+    color = "Crime rate category"
+  )
+
+#   grouping by Indus
+cincinnati$Indus <- cut(
+  cincinnati$Indus,
+  breaks = c(0, 13.60556, Inf), # this cutoff is explained in the next block
+  labels = c("low", "high")      
+)
+ggplot(cincinnati, aes(x = Tax, y = LStat, color=Indus)) +
+  geom_point() +
+  labs(
+    title = "Tax vs LStat by Indus",
+    color = "Indus"
+  )
 ```
 
 Interpretation:
+There is a positive linear relationship between Tax and LStat, in general as Tax increases LStat also increases.
+However there seems to be a strange group around a value of ~675 for Tax.
+Examining the group by coloring by different categorical variables:
+- River doesn't seem to have any effect on the grouping, there aren't enough data points that bound the river (1) to make conclusions.
+- Crime rate categories of 'moderate' and 'high' seem to correspond well with the grouping.
+- Data points with high Indus levels seem to all be part of the strange grouping.
 
 
 ```{r}
