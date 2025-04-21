@@ -240,7 +240,7 @@ cor.test(cincinnati$Age, cincinnati$AvgRoom)
 
 ```
 
-```
+
 Interpretation:
 The correlation between the age and AvgRoom is -0.2423 , which means there is a mild
 negative linear relationship between them and as house get older, they tend to have slightly fewer rooms on average.
@@ -250,7 +250,7 @@ and that there is a statistically significant negative relationship.
 We can conclude that, in our dataset, as the housing age increases, there is a 
 slight tendency for the average number of rooms to decrease.
 
-```
+
 
 ```{r}
 #Investigating: Is there a relationship between the student-teacher ratio (PTRatio) and the crime rate (CrimeRate) in the city?
@@ -268,7 +268,7 @@ print(paste("The Pearson correlation coefficient between PTRatio and CrimeRate i
 cor.test(cincinnati$PTRatio, cincinnati$CrimeRate)
 
 ```
-```
+
 Interpretation:
 The correlation between PTRatio and Crimerate is 0.274, which suggests that as the ratio of students to teachers increases, so does the crimerate. This intuitively makes sense, because less affuent cities will have less teachers for students, and areas such as this are typically more prone to crime. 
 Upon checking the p-value which is 0.00067 < 0.05 , we can say the observation is significantly significant.
@@ -282,14 +282,67 @@ slight tendency for the average number of rooms to decrease.
 
 
 ```
+
 Interpretation:
+
 
 ```{r}
-#Investigating: What is the relationship between industrial land use (Indus) and housing characteristics such as housing prices, room sizes, and property tax rates?
+#Investigating: What is the relationship between industrial land use (Indus) and housing characteristics such as room sizes, property tax rates, and housing prices?
+cincinnati <- read_csv("CINCINNATI.csv") #Reset data
+ggplot(cincinnati, aes(x=Indus))+
+  geom_density()+
+  labs(
+    title = "Indus Density Plot",
+    x = "Indus",
+    y = "Density"
+  )
 
+# === Finding where to split the data ===
+# Compute the density
+density_values <- density(cincinnati$Indus)
+
+# Find local minima
+x <- density_values$x
+y <- density_values$y
+
+# Compare each y-value with its neighbors
+local_minima <- which(diff(sign(diff(y))) == 2) + 1  # Indices of local minima
+
+
+# Extract the x and y coordinates of the minima
+minima_x <- x[local_minima]
+minima_y <- y[local_minima]
+
+# Print the local minima
+data.frame(x = minima_x, y = minima_y)
+# x          y
+# 1 13.60556 0.01937223
+
+ggplot(cincinnati, aes(x = Indus)) +
+  geom_density() +
+  geom_vline(xintercept = minima_x, color = "red", linetype = "dashed", size = 1) +
+  labs(
+    title = "Indus Density Plot Split",
+    x = "Indus",
+    y = "Density"
+  )
+
+# === Splitting Indus -> low + high ===
+cincinnati$Indus <- cut(
+  cincinnati$Indus,
+  breaks = c(0, minima_x, Inf),
+  labels = c("low", "high")      
+)
+
+ggpairs(cincinnati[, c("Indus", "AvgRoom", "Tax", "MedPrice")], aes(color=cincinnati$Indus, alpha=0.5))
 
 ```
+
 Interpretation:
+There seems to be roughly double the amount of low Indus as high Indus,
+The Indus level doesn't have much effect of on average room number (AvgRoom)
+Median price (MedPrice) is shows slight change in distribution between the Indus levels. On average a house in a high Indus area will have a lower MedPrice.
+Tax rate (Tax) however, varies wildly between low and high Indus levels. Tax rates in a high Indus area will on average, be much higher than those in a low area.
 
 
 Data Transformations/Categorizations
