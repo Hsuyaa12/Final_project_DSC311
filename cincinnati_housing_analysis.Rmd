@@ -642,7 +642,7 @@ mse_values <- best_subset_summary$rss / (nrow(train) - 1:nrow(best_subset_summar
 mse_values <- round(mse_values, 2)
 
 results <- data.frame(
-  NumVar = 1:nrow(best_subset_summary$which),
+  modelId = 1:nrow(best_subset_summary$which),
   best_subset_summary$outmat,
   Rsq = best_subset_summary$rsq,
   RSS = best_subset_summary$rss,
@@ -664,21 +664,21 @@ print(results)
 Make four plots to allow comparison between models
 -----------------------------------------------------
 ```{r}
-p1<-ggplot(data = results, aes(x = as.factor(NumVar), y = MSE))+
-  geom_point(color="black", size=2) +ylab("MSE") + xlab("No of variables")
+p1<-ggplot(data = results, aes(x = as.factor(modelId), y = MSE))+
+  geom_point(color="black", size=2) +ylab("MSE") + xlab("ModelId")
 
-p2<-ggplot(data = results, aes(x = as.factor(NumVar), y = AdjR2)) +
-  geom_point(color="black", size=2) +ylab("Adjusted RSQ") + xlab("No of variables")+
+p2<-ggplot(data = results, aes(x = as.factor(modelId), y = AdjR2)) +
+  geom_point(color="black", size=2) +ylab("Adjusted RSQ") + xlab("ModelId")+
   geom_point(data = results[which.max(results$AdjR2), ], color="red", 
              size=3) 
 
-p3<-ggplot(data = results, aes(x = as.factor(NumVar), y = Cp)) +
-  geom_point(color="black", size=2) +ylab("Cp") + xlab("No of variables")+
+p3<-ggplot(data = results, aes(x = as.factor(modelId), y = Cp)) +
+  geom_point(color="black", size=2) +ylab("Cp") + xlab("ModelId")+
   geom_point(data = results[which.min(results$Cp), ], color="red", 
              size=3) 
 
-p4<-ggplot(data = results, aes(x = as.factor(NumVar), y = BIC)) +
-  geom_point(color="black", size=2) +ylab("BIC") + xlab("No of variables")+
+p4<-ggplot(data = results, aes(x = as.factor(modelId), y = BIC)) +
+  geom_point(color="black", size=2) +ylab("BIC") + xlab("ModelId")+
   geom_point(data = results[which.min(results$BIC), ], color="red", 
              size=3) 
 
@@ -740,9 +740,20 @@ vif(backward_model)
 ```
 Findings: Also produced the exact same model as the forward selection and model7
 
-```{r}
-#Model Comparison & Analysis
 
+Model Comparison & Analysis
+```{r}
+#Compare model7 with another model with tax rate.
+#Calculate MSPE with test data, compare
+
+
+```
+
+
+Experiment building models With Removing Tax Rate outlier (666)
+```{r}
+
+#Drop outliers from train and test
 
 ```
 
