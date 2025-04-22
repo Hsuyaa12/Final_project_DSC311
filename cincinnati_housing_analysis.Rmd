@@ -751,12 +751,175 @@ Model Comparison & Analysis
 
 
 Experiment building models With Removing Tax Rate outlier (666)
+
 ```{r}
 
 #Drop outliers from train and test
 
+cincinnati <- read_csv("CINCINNATI.csv")
+cincinnati_clean <- cincinnati %>% 
+  filter(Tax <= 600)
+head(cincinnati_clean)
+```
+```{r}
+#IndusCat
+
+#There appears to be bimodality with Indus
+dens <- density(cincinnati_clean$Indus)
+plot(dens, main = "Checking for Bimodality in Indus")
+polygon(dens, col = "skyblue", border = "darkblue")
+#Find local minima
+local_mins <- which(diff(sign(diff(dens$y))) == 2) + 1
+min_x_values <- dens$x[local_mins]
+min_y_values <- dens$y[local_mins]
+#Add vertical lines and points at the local minima
+abline(v = min_x_values, col = "red", lty = 2)
+points(min_x_values, min_y_values, col = "red", pch = 19)
+#Print the local minimum x-values
+min_x_values
+#Convert Indus to a categorical variable.
+cincinnati_clean$IndusCat <- ifelse(cincinnati_clean$Indus < min_x_values, "Low", "High")
+cincinnati_clean$IndusCat <- factor(cincinnati_clean$IndusCat, levels = c("Low", "High"))
+#ggpairs(data = cincinnati_clean, aes(color = IndusCat, alpha = 0.6))
+
+#CrimeRateCat
+cincinnati_clean$CrimeRateCat <- cut(
+  cincinnati_clean$CrimeRate,
+  breaks = c(0, 1, 5, Inf),    # Define breakpoints for "low", "medium", "high"
+  labels = c("Low", "Medium", "High")      # Labels for each category
+)
+cincinnati_clean$CrimeRateCat <- factor(cincinnati_clean$CrimeRateCat, levels = c("Low", "Medium", "High"))
+#ggpairs(cincinnati_clean, aes(color=cincinnati_clean$CrimeRateCat, alpha=0.5))
+
+#create binary variables for categorical variable
+cincinnati_clean$IsLowCrime <- ifelse(cincinnati_clean$CrimeRateCat == "Low", 1, 0)
+cincinnati_clean$IsMediumCrime <- ifelse(cincinnati_clean$CrimeRateCat == "Medium", 1, 0)
+cincinnati_clean$IsHighCrime <- ifelse(cincinnati_clean$CrimeRateCat == "High", 1, 0)
+```
+```{r}
+#train and test Set
+set.seed(123)
+sample <- sample(c(TRUE, FALSE), nrow(cincinnati_clean), replace=TRUE, prob=c(0.7,0.3))
+train_clean  <- cincinnati_clean[sample, ]
+test_clean   <- cincinnati_clean[!sample, ]
+
+```
+```{r}
+
+
+full_model3 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + log(LStat), data = train_clean)
+summary(full_model3)
+par(mfrow = c(2,2))
+plot(full_model3)
+ad.test(full_model3$residuals)
+
+full_model4 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + I(1/LStat), data = train_clean)
+summary(full_model4)
+plot(full_model4)
+ad.test(full_model4$residuals)
+
+# second model (fullmodel 4 ) is performing better in this case as well.Doing bestsubset on full_model4 now 
+```
+```{r}
+best_subset_model_clean <- regsubsets(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + I(1/LStat), data = train_clean, nbest = 2)
+best_subset_summary_clean <- summary(best_subset_model_clean)
+
+#Add RSS, Adjusted R², Cp, and BIC, MSE, etc to the same data frame
+mse_values <- best_subset_summary_clean$rss / (nrow(train) - 1:nrow(best_subset_summary_clean$which))
+mse_values <- round(mse_values, 2)
+
+results_clean <- data.frame(
+  NumVar = 1:nrow(best_subset_summary_clean$which),
+  best_subset_summary_clean$outmat,
+  Rsq = best_subset_summary_clean$rsq,
+  RSS = best_subset_summary_clean$rss,
+  AdjR2 = best_subset_summary_clean$adjr2,
+  Cp = best_subset_summary_clean$cp,
+  BIC = best_subset_summary_clean$bic,
+  MSE = mse_values
+)
+results_clean$Rsq <- round(results_clean$Rsq, 2)
+results_clean$RSS <- round(results_clean$RSS, 2)
+results_clean$AdjR2 <- round(results_clean$AdjR2, 2)
+results_clean$Cp <- round(results_clean$Cp, 2)
+results_clean$BIC <- round(results_clean$BIC, 2)
+
+
+print(results_clean)
+```
+```{r}
+# four plots for comparison
+
+p1<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = MSE))+
+  geom_point(color="black", size=2) +ylab("MSE") + xlab("No of variables")
+  
+
+p2<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = AdjR2)) +
+  geom_point(color="black", size=2) +ylab("Adjusted RSQ") + xlab("No of variables")+
+  geom_point(data = results_clean[which.max(results_clean$AdjR2), ], color="red", 
+             size=3) 
+
+p3<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = Cp)) +
+  geom_point(color="black", size=2) +ylab("Cp") + xlab("No of variables")+
+  geom_point(data = results_clean[which.min(results_clean$Cp), ], color="red", 
+             size=3) 
+
+p4<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = BIC)) +
+  geom_point(color="black", size=2) +ylab("BIC") + xlab("No of variables")+
+  geom_point(data = results_clean[which.min(results_clean$BIC), ], color="red", 
+             size=3) 
+
+grid.arrange(p1,p2,p3,p4,nrow=2)
+```
+```{r}
+#Findings: Model 7 is the winner in all cases but in model 7 , predictors has changed
+# CrimeRate is dropped and Tax is added as the new predictros keeping othe predictors as the same (AVGRooom, PTRatio, 1/LSAt) ,getting model 7 
+
+coef(best_subset_model_clean, 7)
+model7_clean <- lm(MedPrice ~ AvgRoom + Tax +  PTRatio + I(1/LStat), data=train_clean)
+summary(model7_clean)
+par(mfrow = c(2,2))
+plot(model7_clean)
+ad.test(model7_clean$residuals)
+anova(model7_clean)
+deviance(model7_clean)
+vif(model7_clean)
+
+#Findings : 82.5% of the variation is explained by these four predictors , better than before dropping tax,which was 78.5% 
+```
+```{r}
+#Linear Regression - Forward Selection
+
+null_model_clean <- lm(MedPrice ~ 1, data = train_clean)
+upper_model_clean <- formula(full_model4)
+forward_model_clean <- step(null_model_clean, direction = "forward", scope = upper_model_clean)
+coef(forward_model_clean)
+summary(forward_model_clean)
+par(mfrow = c(2,2))
+plot(forward_model_clean)
+ad.test(forward_model_clean$residuals)
+anova(forward_model_clean)
+deviance(forward_model_clean)
+vif(forward_model_clean)
+```
+```{r}
+#Backward Selection
+backward_model_clean <- step(full_model2, direction = "backward")
+coef(backward_model_clean)
+summary(backward_model_clean)
+par(mfrow = c(2,2))
+plot(backward_model_clean)
+ad.test(backward_model_clean$residuals)
+anova(backward_model_clean)
+deviance(backward_model_clean)
+vif(backward_model_clean)
+
+#Findings: Both Forward and Backward selection produced the exact ouput as model 7 that we got from best subset.
 ```
 
+Analysis
+----------
+When we dropped the Tax at 666 and did the building process again, we found that the model it picks is the same which is model 7 with 4 predictors but the predictors has changed where CrimeRate is dropped and Tax is added as the predictor where AvgRoom , PTRatio and 1/LSat is the same. The model with the tax dropped is slightly better as the adjR^2 is 3% more in the model where we have dropped the tax outliers.
 
 
 #Notes
