@@ -1009,7 +1009,25 @@ results_clean$Cp <- round(results_clean$Cp, 2)
 results_clean$BIC <- round(results_clean$BIC, 2)
 
 
-print(results_clean)
+results_clean %>%
+  mutate_at(vars(Rsq: MSE), ~ sprintf("%.2f", .)) %>%
+  kable(
+    format = "html",      
+    caption = "Best‐Subset Selection Results",
+    align = c("c", rep("c", ncol(results) - 1)),
+    booktabs = TRUE
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position   = "center",
+    bootstrap_options = c("striped", "hover", "condensed")
+  ) %>%
+  column_spec(
+    1,                            # first column
+    bold      = TRUE,             # still bold
+    width     = "4em",            # give it some fixed width
+    extra_css = "white-space: nowrap;"  
+  )
 ```
 ```{r}
 # four plots for comparison
