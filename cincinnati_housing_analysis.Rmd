@@ -1,14 +1,14 @@
 DATASET
 
-CrimeRate - Per capita crime rate by city
-Indus - Proportion of non-retail business acres per city.
-River – River front or not (1-bounds river; 0-otherwise)
-AvgRoom - Average number of rooms per dwelling per city
-Age – Average age of a house by city
-Tax - full-value property-tax rate per $10,000
-PTRatio - pupil-teacher ratio by city
-LStat - % lower status of the population by city
-MedPrice - Median price of owner-occupied homes in $1000's
+CrimeRate - Per capita crime rate by city <br>
+Indus - Proportion of non-retail business acres per city.<br>
+River – River front or not (1-bounds river; 0-otherwise) <br>
+AvgRoom - Average number of rooms per dwelling per city <br>
+Age – Average age of a house by city <br>
+Tax - full-value property-tax rate per $10,000 <br>
+PTRatio - pupil-teacher ratio by city <br>
+LStat - % lower status of the population by city <br>
+MedPrice - Median price of owner-occupied homes in $1000's <br>
 
 Load necessary libraries
 ------------------------
@@ -239,7 +239,6 @@ river_counts <- cincinnati %>%
   )
 river_counts
 
-
 ```
 Findings: Only 7 houses are riverfront which is only about 4.6% . Doing further analysis to see if we can drop it.
 
@@ -285,10 +284,10 @@ ggplot(cincinnati, aes(
 ```
 
 # Findings:
-All the really low and really high prices outliers come from non-river homes. Riverfront homes all sit in the normal price range. So we can't drop river front houses although their portion in our dataset is not significant.
+All the really low and really high prices outliers come from non-river homes. Riverfront homes all sit in the normal price range. So we can't drop river front houses although their portion in our dataset is not significant. Riverfront does not seem to have much of an impact on any of the other variables.  
 
 Research Question Investigation
-------------------------
+-------------------------------
 ```{r}
 #How does the crime rate affect housing prices across different price segments?
 #create price quartiles
@@ -332,8 +331,6 @@ print(paste("The Pearson correlation coefficient between Age and AvgRoom is:", r
 cor.test(cincinnati$Age, cincinnati$AvgRoom)
 
 ```
-
-
 Interpretation:
 The correlation between the age and AvgRoom is -0.2423 , which means there is a mild
 negative linear relationship between them and as house get older, they tend to have slightly fewer rooms on average.
@@ -342,8 +339,6 @@ Also the confidence interval does not contain zero, it supports that true correl
 and that there is a statistically significant negative relationship. 
 We can conclude that, in our dataset, as the housing age increases, there is a 
 slight tendency for the average number of rooms to decrease.
-
-
 
 ```{r}
 #Investigating: Is there a relationship between the student-teacher ratio (PTRatio) and the crime rate (CrimeRate) in the city?
@@ -363,7 +358,7 @@ cor.test(cincinnati$PTRatio, cincinnati$CrimeRate)
 ```
 
 Interpretation:
-The correlation between PTRatio and Crimerate is 0.274, which suggests that as the ratio of students to teachers increases, so does the crimerate. This intuitively makes sense, because less affuent cities will have less teachers for students, and areas such as this are typically more prone to crime. 
+The correlation between PTRatio and Crimerate is 0.274, which suggests that as the ratio of students to teachers increases, so does the crimerate. This intuitively makes sense, because less affluent cities will have less teachers for students, and areas such as this are typically more prone to crime. 
 Upon checking the p-value which is 0.00067 < 0.05 , we can say the observation is significantly significant.
 Also the confidence interval does not contain zero, it supports that true correlation is different from zero and that there is a statistically significant negative relationship. 
 We can conclude that, in our dataset, as the housing age increases, there is a 
@@ -690,7 +685,7 @@ ggplot(cincinnati, aes(x = Tax, y = MedPrice, color = IndusCat)) +
        color = "Indus Category")
 
 ```
-Findings: The special group (High Indus, Tax = 666) isn't drastically deviating in terms of the Tax relationship. The blue trendline, which includes the cluster at Tax ≈ 666, doesn't show a sharp bend or a completely different slope at that high tax value compared to the rest of the blue line. This reinforces the observation that they might roughly follow a similar trend with respect to tax. For now, I'll leave as is. 
+Findings: The special group (High Indus, Tax = 666) isn't drastically deviating in terms of the Tax relationship. The blue trendline, which includes the cluster at Tax ≈ 666, doesn't show a sharp bend or a completely different slope at that high tax value compared to the rest of the blue line. This reinforces the observation that they might roughly follow a similar trend with respect to tax. For now, I'll leave as is. We can experiment later with dropping the outlier tax values from the dataset to see how it impacts our model.
 
 
 Split Data into Training/Test sets
@@ -702,7 +697,6 @@ train  <- cincinnati[sample, ]
 test   <- cincinnati[!sample, ]
 
 ```
-
 
 
 Linear Regression - Full Model
@@ -867,10 +861,6 @@ ad.test(full_model1$residuals)
 anova(model8)
 deviance(model8)
 vif(model8)
-
-
-
-
 ```
 Findings:
 The linear regression model predicting MedPrice using CrimeRateCat, AvgRoom, Tax, and 1/LStat demonstrates a strong fit to the training data, with a Multiple R-squared of 0.779 and an Adjusted R-squared of 0.7679. The model is statistically significant overall, as indicated by a high F-statistic (70.49, p < 2.2e-16).  Among the predictors, AvgRoom and 1/LStat are highly significant (p < 0.001), suggesting that homes with more rooms and a lower proportion of lower-status residents (captured by a higher value of 1/LStat) are associated with higher median housing prices.
@@ -880,10 +870,6 @@ Additionally, CrimeRateCatHigh is statistically significant (p = 0.0189), indica
 The residual standard error is 3.909 on 100 degrees of freedom, and the residuals appear symmetrically distributed, as visualized in the diagnostic plots. An Anderson-Darling test on the residuals does not indicate a violation of normality assumptions. Variance Inflation Factors (VIFs) are all within acceptable ranges, indicating no significant multicollinearity concerns.  Overall, while this model is slightly weaker than Model 7, it still captures key predictors of housing prices with relatively strong explanatory power.
 
 ```{r}
-
-
-
-
 #Calculate MSPE with test data, compare
 
 # Predict MedPrice using model 7 and model 8 on test data
@@ -903,8 +889,6 @@ mspe_model8 <- mean((test$MedPrice - pred_model8)^2)
 # Print the results
 mspe_model7
 mspe_model8
-
-
 #
 
 ```
