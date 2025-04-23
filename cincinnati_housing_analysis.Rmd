@@ -743,9 +743,56 @@ Findings: Also produced the exact same model as the forward selection and model7
 
 Model Comparison & Analysis
 ```{r}
-#Compare model7 with another model with tax rate.
+#Comparing model7 with another model with tax rate.
+# We took model 8 here which takes Crime Rate, Avg room. ,  Tax and  1/LStat which has Adj. Rsq:0.77, Cp:	8.73, BIC:-136.66	and MSE of 15.60
+coef(best_subset_model, 8)
+model8 <- lm(MedPrice ~ CrimeRateCat + AvgRoom + Tax + I(1/LStat), data=train)
+summary(model8)
+par(mfrow = c(2,2))
+plot(full_model1)
+ad.test(full_model1$residuals)
+anova(model8)
+deviance(model8)
+vif(model8)
+
+
+
+
+```
+Findings:
+The linear regression model predicting MedPrice using CrimeRateCat, AvgRoom, Tax, and 1/LStat demonstrates a strong fit to the training data, with a Multiple R-squared of 0.779 and an Adjusted R-squared of 0.7679. The model is statistically significant overall, as indicated by a high F-statistic (70.49, p < 2.2e-16).  Among the predictors, AvgRoom and 1/LStat are highly significant (p < 0.001), suggesting that homes with more rooms and a lower proportion of lower-status residents (captured by a higher value of 1/LStat) are associated with higher median housing prices.
+
+Additionally, CrimeRateCatHigh is statistically significant (p = 0.0189), indicating that homes in high crime areas tend to have notably lower median prices compared to low crime areas. However, the Tax variable and CrimeRateCatMedium are not statistically significant (p > 0.3 and p > 0.8 respectively), suggesting weaker explanatory power in the current model context.  
+
+The residual standard error is 3.909 on 100 degrees of freedom, and the residuals appear symmetrically distributed, as visualized in the diagnostic plots. An Anderson-Darling test on the residuals does not indicate a violation of normality assumptions. Variance Inflation Factors (VIFs) are all within acceptable ranges, indicating no significant multicollinearity concerns.  Overall, while this model is slightly weaker than Model 7, it still captures key predictors of housing prices with relatively strong explanatory power.
+
+```{r}
+
+
+
+
 #Calculate MSPE with test data, compare
 
+# Predict MedPrice using model 7 and model 8 on test data
+pred_model7 <- predict(model7, newdata = test)
+pred_model8 <- predict(model8, newdata = test)
+
+
+```
+
+```{r}
+
+
+# Mean Squared Prediction Error
+mspe_model7 <- mean((test$MedPrice - pred_model7)^2)
+mspe_model8 <- mean((test$MedPrice - pred_model8)^2)
+
+# Print the results
+mspe_model7
+mspe_model8
+
+
+#
 
 ```
 
