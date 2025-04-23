@@ -912,6 +912,54 @@ Findings:
 Model 7 performs slightly better than Model 8 on the test set as it has a lower Mean Squared Prediction Error.
 
 
+
+Checking model 5 
+
+```{r}
+coef(best_subset_model, 5)
+model5 <- lm(MedPrice ~ CrimeRateCat + AvgRoom +  I(1/LStat), data=train)
+model7 <- lm(MedPrice ~ CrimeRateCat + AvgRoom + PTRatio + I(1/LStat), data=train)
+summary(model5)
+par(mfrow = c(2,2))
+plot(model5)
+ad.test(model5$residuals)
+anova(model5)
+deviance(model5)
+vif(model5)
+```
+```{r}
+
+
+
+
+#Calculate MSPE with test data, compare
+
+# Predict MedPrice using model 5 and model 7 on test data
+pred_model5 <- predict(model5, newdata = test)
+pred_model7 <- predict(model7, newdata = test)
+
+
+```
+
+```{r}
+
+
+# Mean Squared Prediction Error
+mspe_model5 <- mean((test$MedPrice - pred_model5)^2)
+mspe_model7 <- mean((test$MedPrice - pred_model7)^2)
+
+# Print the results
+mspe_model5
+mspe_model7
+
+
+#Do Anova to check if the complex model is significant
+anova(model5, model7)
+
+```
+Findings:
+Model 7 is still the best one as it has smaller MSPE and p value is also better in model 7 i.e p<0.05. p values and anova test between two models tells us that having the extra predictor is producing a better model.
+
 Experiment building models With Removing Tax Rate outlier (666)
 
 ```{r}
