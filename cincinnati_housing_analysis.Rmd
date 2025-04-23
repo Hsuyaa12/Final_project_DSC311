@@ -194,6 +194,97 @@ ggplot(cincinnati, aes(x = LStat, y = MedPrice)) +
 ```
 
 
+```{r}
+library(dplyr); library(tidyr); library(knitr)
+
+demographics <- cincinnati %>%
+  summarise_if(
+    is.numeric,
+    list(
+      Mean   = ~mean(.x, na.rm = TRUE),
+      Median = ~median(.x, na.rm = TRUE),
+      SD     = ~sd(.x, na.rm = TRUE),
+      Min    = ~min(.x, na.rm = TRUE),
+      Max    = ~max(.x, na.rm = TRUE)
+    )
+  ) %>%
+ 
+  pivot_longer(
+    everything(),
+    names_to  = c("Variable", "Statistic"),
+    names_sep = "_",
+    values_to = "Value"
+  ) %>%
+  pivot_wider(
+    names_from  = Statistic,
+    values_from = Value
+  )
+
+kable(demographics, digits = 2,
+      caption = "Descriptive Statistics for Key Variables")
+
+```
+
+
+```{r demography-r}
+
+# count how many houses are riverfront vs. non-riverfront
+river_counts <- cincinnati %>%
+  group_by(River) %>%
+  summarise(
+    count = n(),
+    pct   = round(n() / nrow(cincinnati) * 100, 1)
+  )
+river_counts
+
+
+```
+Findings: Only 7 houses are riverfront which is only about 4.6% . Doing further analysis to see if we can drop it.
+
+```{r demography-river}
+# Checking to see if riverfront houses are outliers
+#  Compute IQR thresholds for MedPrice
+Q1      <- quantile(cincinnati$MedPrice, 0.25)
+Q3      <- quantile(cincinnati$MedPrice, 0.75)
+IQR_val <- IQR(cincinnati$MedPrice)
+lower   <- Q1 - 1.5 * IQR_val
+upper   <- Q3 + 1.5 * IQR_val
+
+
+cincinnati <- cincinnati %>%
+  mutate(is_outlier = MedPrice < lower | MedPrice > upper)
+
+# See how many outliers are by river status
+outlier_summary <- cincinnati %>%
+  filter(is_outlier) %>%
+  group_by(River) %>%
+  summarise(
+    n = n(),
+    pct = round(n()/nrow(cincinnati)*100, 1)
+  )
+print(outlier_summary)
+
+```
+
+```{r demography-river outlier}
+
+ggplot(cincinnati, aes(
+  x = factor(River, labels = c("Non-river", "Riverfront")),
+  y = MedPrice
+)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16) +
+  labs(
+    title = "Median Home Price by River Status",
+    x     = "River Status",
+    y     = "Median Price ($1000s)"
+  ) +
+  theme_minimal()
+
+```
+
+# Findings:
+All the really low and really high prices outliers come from non-river homes. Riverfront homes all sit in the normal price range. So we can't drop river front houses although their portion in our dataset is not significant.
+
 Research Question Investigation
 ------------------------
 ```{r}
@@ -224,10 +315,10 @@ Interpretation:
 As we can see here, it appears that crimerate has the highest impact on low price homes. We can see that the lowest price quartile (Q1) seems to have the highest crime rates, and the trend line indicates that there is a strong negative correlation with housing price and crime rate in Q1. Although there are some smal trends in the other quartiles, they aren't really clear enough to draw meaningful conclusions. From this, it appears that high crime disproportionately impacts lower price housing more than any other pricing group. 
 
 ```{r}
-# Investigating the RelationShip between Housing Age and Room Size
+# Investigating the RelationShip between Housing Age and Room Number
 ggplot(cincinnati, aes(x = Age, y = AvgRoom)) +
   geom_point(color = "blue") +
-  labs(title = "Relationship between Housing Age and Average Room Size",
+  labs(title = "Relationship between Housing Age and Average Room Numbers",
        x = "Housing Age (Years)",
        y = "Average Number of Rooms") +
   theme_minimal()
@@ -795,6 +886,8 @@ mspe_model8
 #
 
 ```
+Findings:
+Model 7 performs slightly better than Model 8 on the test set as it has a lower Mean Squared Prediction Error.
 
 
 Experiment building models With Removing Tax Rate outlier (666)
