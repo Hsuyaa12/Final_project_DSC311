@@ -851,6 +851,8 @@ train_clean  <- cincinnati_clean[sample, ]
 test_clean   <- cincinnati_clean[!sample, ]
 
 ```
+
+
 ```{r}
 
 
@@ -872,7 +874,7 @@ best_subset_model_clean <- regsubsets(MedPrice ~ CrimeRateCat + IndusCat + River
 best_subset_summary_clean <- summary(best_subset_model_clean)
 
 #Add RSS, Adjusted R², Cp, and BIC, MSE, etc to the same data frame
-mse_values <- best_subset_summary_clean$rss / (nrow(train) - 1:nrow(best_subset_summary_clean$which))
+mse_values <- best_subset_summary_clean$rss / (nrow(train_clean) - 1:nrow(best_subset_summary_clean$which))
 mse_values <- round(mse_values, 2)
 
 results_clean <- data.frame(
@@ -898,21 +900,21 @@ print(results_clean)
 # four plots for comparison
 
 p1<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = MSE))+
-  geom_point(color="black", size=2) +ylab("MSE") + xlab("No of variables")
+  geom_point(color="black", size=2) +ylab("MSE") + xlab("ModelId")
   
 
 p2<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = AdjR2)) +
-  geom_point(color="black", size=2) +ylab("Adjusted RSQ") + xlab("No of variables")+
+  geom_point(color="black", size=2) +ylab("Adjusted RSQ") + xlab("ModelId")+
   geom_point(data = results_clean[which.max(results_clean$AdjR2), ], color="red", 
              size=3) 
 
 p3<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = Cp)) +
-  geom_point(color="black", size=2) +ylab("Cp") + xlab("No of variables")+
+  geom_point(color="black", size=2) +ylab("Cp") + xlab("ModelId")+
   geom_point(data = results_clean[which.min(results_clean$Cp), ], color="red", 
              size=3) 
 
 p4<-ggplot(data = results_clean, aes(x = as.factor(NumVar), y = BIC)) +
-  geom_point(color="black", size=2) +ylab("BIC") + xlab("No of variables")+
+  geom_point(color="black", size=2) +ylab("BIC") + xlab("ModelId")+
   geom_point(data = results_clean[which.min(results_clean$BIC), ], color="red", 
              size=3) 
 
@@ -949,6 +951,8 @@ anova(forward_model_clean)
 deviance(forward_model_clean)
 vif(forward_model_clean)
 ```
+
+
 ```{r}
 #Backward Selection
 backward_model_clean <- step(full_model2, direction = "backward")
@@ -967,25 +971,3 @@ vif(backward_model_clean)
 Analysis
 ----------
 When we dropped the Tax at 666 and did the building process again, we found that the model it picks is the same which is model 7 with 4 predictors but the predictors has changed where CrimeRate is dropped and Tax is added as the predictor where AvgRoom , PTRatio and 1/LSat is the same. The model with the tax dropped is slightly better as the adjR^2 is 3% more in the model where we have dropped the tax outliers.
-
-
-#Notes
-4/16/2025
-Start with focus on demography.
-Figure out how much of the houses are on the river. See if there are not many on the river, like 6 or so, if so, they may be outliers and can be dropped. 
-We only have 7 houses on the river, these might destory our analysis.
-Make a boxplot to check for outliers. If so, check to see if those prices are riverfront. If so, drop them. If not, keep them in.
-
-Next, check age. 
-We have a range from 3-100. Google and see what the cutoffs are, break it into categories.
-
-Plot only y = B0 + B1x1. Make a bunch of residual plots to see if the model looks good. If several have a non constant variance , transform y variable using ln(y). Then, check to see if ln(y) = B0 + B1x1
-If we see a curve indicating non linearity, add x^2 or whatever to give y = B0 + B1x1 + B2X^2. The VIF here will be huge but that doesn't matter.
-
-Everytime we do changes, we need to fit and check the residuals and see if it improves. 
-
-Once we decide on all the transformations, we start building. Not just best subsets, but also forward and backaward selection. Check if these models are in the best subset.
-
-To check interactions with categorical variables, we would make a seperate chart for each option in the categorical variable to check each option to see if it interacted. In our case, plot Riverfront x1 and x2 vs medPrice. 
-
-It is very hard to find interaction in quantitative varables. We can cateorgize it and make plots out of it to check. 
