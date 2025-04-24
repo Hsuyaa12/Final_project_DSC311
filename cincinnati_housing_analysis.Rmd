@@ -558,8 +558,27 @@ Individual Variable Residual Analysis
 ```{r}
 #CrimeRate
 m <- lm(MedPrice ~ CrimeRateCat, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 #examine each category vs MedPrice
 ggplot(cincinnati, aes(x = CrimeRate, y = MedPrice, color = CrimeRateCat)) +
   geom_point(alpha = 0.7) +
@@ -575,8 +594,26 @@ Findings: Looks fine, nothing of note here. Confirms that higher crime rates gen
 ```{r}
 #IndusCat
 m <- lm(MedPrice ~ IndusCat, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 #examine each category vs MedPrice
 ggplot(cincinnati, aes(x = Indus, y = MedPrice, color = IndusCat)) +
   geom_point(alpha = 0.7) +
@@ -591,16 +628,52 @@ Findings: Looks fine, nothing of note. Confirms that higher Indus categories gen
 ```{r}
 #River
 m <- lm(MedPrice ~ River, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ```
 Findings: Looks mostly ok, the normality looks slightly skewed but not too alarming.
 
 ```{r}
 #AvgRoom
 m <- lm(MedPrice ~ AvgRoom, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 ```
 Findings: Overall, it looks ok. The Residuals vs Fitted plot has a moderate funnel shape, indicating possible slight levels of non-constant varience. The trend line on the Residuals vs Fitted plot isn't too bad, so leave as is for now. Normality looks good. 
@@ -608,13 +681,49 @@ Findings: Overall, it looks ok. The Residuals vs Fitted plot has a moderate funn
 ```{r}
 #Age
 m <- lm(MedPrice ~ Age, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 #What does log transform do?
 m_log <- lm(log(MedPrice) ~ Age, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m_log)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m_log$fitted.values, residual = m_log$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 ```
 Findings: Residual plot looks a bit concerning. Close grouping below residual line, spread grouping above it. Q-Q plot right side trends upward rather quickly. Doing a log transform on MedPrice seems to fix normality and tighten up the varience, though there is still a reverse funnel shape, indicating more variance at lower prices. This makes sense, since lower-priced homes are more susceptible to factors like crime, age, etc. which aren't in the model here. 
@@ -622,8 +731,26 @@ Findings: Residual plot looks a bit concerning. Close grouping below residual li
 ```{r}
 #Tax
 m <- lm(MedPrice ~ Tax, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 ```
 Findings: We have a wierd grouping of tax rates on the left side, which corresponds to the high indus tax bracket, and then a normal spread on the right, corresponding to the low indus cities. On both sides, the residuals look evenly spread around the line, indicating equal varience despite the weird groupings. The normality also looks good. 
@@ -631,8 +758,26 @@ Findings: We have a wierd grouping of tax rates on the left side, which correspo
 ```{r}
 #PTRatio
 m <- lm(MedPrice ~ PTRatio, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 ```
 Findings: Looks ok, nothing too noteworthy here. 
@@ -640,20 +785,92 @@ Findings: Looks ok, nothing too noteworthy here.
 ```{r}
 #LStat
 m <- lm(MedPrice ~ LStat, data = cincinnati)
-par(mfrow = c(2,2))
-plot(m)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 m1 <- lm(MedPrice ~ I(LStat^2), data = cincinnati)
-par(mfrow = c(2,2))
-plot(m1)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m1$fitted.values, residual = m1$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 m2 <- lm(MedPrice ~ I(1/LStat), data = cincinnati)
-par(mfrow = c(2,2))
-plot(m2)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m2$fitted.values, residual = m2$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 m3 <- lm(MedPrice ~ log(LStat), data = cincinnati)
-par(mfrow = c(2,2))
-plot(m3)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m3$fitted.values, residual = m3$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 
 ```
 Findings: Initial plot of LStat indicates non-linearity in the residual plot, and also in the Q-Q plot via a sharp deviation on the right end of the line. To test the non-linearity theory, I applied two different transformations on LStat:
@@ -704,14 +921,52 @@ Linear Regression - Full Model
 ```{r}
 full_model1 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + log(LStat), data = train)
 summary(full_model1)
-par(mfrow = c(2,2))
-plot(full_model1)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = full_model1$fitted.values, residual = full_model1$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(full_model1$residuals)
+
+
 
 full_model2 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + I(1/LStat), data = train)
 summary(full_model2)
-par(mfrow = c(2,2))
-plot(full_model2)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = full_model2$fitted.values, residual = full_model2$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(full_model2$residuals)
 
 ```
@@ -800,8 +1055,26 @@ Get Model 7
 coef(best_subset_model, 7)
 model7 <- lm(MedPrice ~ CrimeRateCat + AvgRoom + PTRatio + I(1/LStat), data=train)
 summary(model7)
-par(mfrow = c(2,2))
-plot(full_model1)
+# ===== Residuals + QQ Plots =====
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = model7$fitted.values, residual = model7$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(full_model1$residuals)
 anova(model7)
 deviance(model7)
@@ -821,8 +1094,27 @@ upper_model <- formula(full_model2)
 forward_model <- step(null_model, direction = "forward", scope = upper_model)
 coef(forward_model)
 summary(forward_model)
-par(mfrow = c(2,2))
-plot(forward_model)
+# ===== Residuals + QQ Plots =====
+m <- forward_model
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(forward_model$residuals)
 anova(forward_model)
 deviance(forward_model)
@@ -838,8 +1130,27 @@ Linear Regression - Backward Selection
 backward_model <- step(full_model2, direction = "backward")
 coef(backward_model)
 summary(backward_model)
-par(mfrow = c(2,2))
-plot(backward_model)
+# ===== Residuals + QQ Plots =====
+m <- backward_model
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(backward_model$residuals)
 anova(backward_model)
 deviance(backward_model)
@@ -855,8 +1166,27 @@ Model Comparison & Analysis
 coef(best_subset_model, 8)
 model8 <- lm(MedPrice ~ CrimeRateCat + AvgRoom + Tax + I(1/LStat), data=train)
 summary(model8)
-par(mfrow = c(2,2))
-plot(full_model1)
+# ===== Residuals + QQ Plots =====
+m <- model8
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(full_model1$residuals)
 anova(model8)
 deviance(model8)
@@ -904,8 +1234,27 @@ coef(best_subset_model, 5)
 model5 <- lm(MedPrice ~ CrimeRateCat + AvgRoom +  I(1/LStat), data=train)
 model7 <- lm(MedPrice ~ CrimeRateCat + AvgRoom + PTRatio + I(1/LStat), data=train)
 summary(model5)
-par(mfrow = c(2,2))
-plot(model5)
+# ===== Residuals + QQ Plots =====
+m <- model5
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(model5$residuals)
 anova(model5)
 deviance(model5)
@@ -1005,13 +1354,51 @@ test_clean   <- cincinnati_clean[!sample, ]
 
 full_model3 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + log(LStat), data = train_clean)
 summary(full_model3)
-par(mfrow = c(2,2))
-plot(full_model3)
+# ===== Residuals + QQ Plots =====
+m <- full_model3
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(full_model3$residuals)
 
 full_model4 <- lm(MedPrice ~ CrimeRateCat + IndusCat + River + AvgRoom + Age + Tax + PTRatio + I(1/LStat), data = train_clean)
-summary(full_model4)
-plot(full_model4)
+# ===== Residuals + QQ Plots =====
+m <- full_model4
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(full_model4$residuals)
 
 # second model (fullmodel 4 ) is performing better in this case as well.Doing bestsubset on full_model4 now 
@@ -1092,8 +1479,27 @@ grid.arrange(p1,p2,p3,p4,nrow=2)
 coef(best_subset_model_clean, 7)
 model7_clean <- lm(MedPrice ~ AvgRoom + Tax +  PTRatio + I(1/LStat), data=train_clean)
 summary(model7_clean)
-par(mfrow = c(2,2))
-plot(model7_clean)
+# ===== Residuals + QQ Plots =====
+m <- model7_clean
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(model7_clean$residuals)
 anova(model7_clean)
 deviance(model7_clean)
@@ -1109,8 +1515,27 @@ upper_model_clean <- formula(full_model4)
 forward_model_clean <- step(null_model_clean, direction = "forward", scope = upper_model_clean)
 coef(forward_model_clean)
 summary(forward_model_clean)
-par(mfrow = c(2,2))
-plot(forward_model_clean)
+# ===== Residuals + QQ Plots =====
+m <- forward_model_clean
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(forward_model_clean$residuals)
 anova(forward_model_clean)
 deviance(forward_model_clean)
@@ -1123,8 +1548,27 @@ vif(forward_model_clean)
 backward_model_clean <- step(full_model2, direction = "backward")
 coef(backward_model_clean)
 summary(backward_model_clean)
-par(mfrow = c(2,2))
-plot(backward_model_clean)
+# ===== Residuals + QQ Plots =====
+m <- backward_model_clean
+par(mfrow = c(1,1))
+temp_df <- data.frame(fitted = m$fitted.values, residual = m$residuals)
+
+# Create a residual plot using ggplot2
+ggplot(data = temp_df, mapping = aes(x = fitted, y = residual)) +
+  geom_point() +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residual Plot")
+
+# Create Q-Q plot
+ggplot(temp_df, aes(sample = residual)) +
+  stat_qq() +                                  # Generates Q-Q plot
+  stat_qq_line(color = "black", linetype = "dashed") +  # Adds reference line
+  labs(title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles") +
+  theme_minimal()
+# ================================
 ad.test(backward_model_clean$residuals)
 anova(backward_model_clean)
 deviance(backward_model_clean)
